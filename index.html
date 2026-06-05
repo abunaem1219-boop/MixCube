@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MixCube - Stream Your Favorites</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Styles -->
+    <style>
+        /* Custom scrollbar for webkit browsers */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .main-content { padding-bottom: 80px; /* Space for fixed nav bar */ }
+        .page { display: none; }
+        .page.active { display: block; }
+        .category-grid-item {
+            background-image: linear-gradient(to top right, #1e40af, #3b82f6);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+
+    <div id="app-container" class="max-w-4xl mx-auto">
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Home Page -->
+            <div id="home-page" class="page active p-4">
+                <header class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-white">Mix<span class="text-blue-500">Cube</span></h1>
+                    <i class="fas fa-bell text-xl text-gray-400"></i>
+                </header>
+                
+                <!-- Banner Carousel -->
+                <div id="banner-carousel" class="relative w-full h-48 md:h-64 rounded-xl overflow-hidden mb-8 shadow-lg">
+                    <!-- Banners will be injected here -->
+                </div>
+
+                <!-- Movie Carousels by Category -->
+                <div id="movie-carousels-container">
+                    <!-- Categories and movies will be injected here -->
+                </div>
+            </div>
+
+            <!-- Search Page -->
+            <div id="search-page" class="page p-4">
+                <h2 class="text-2xl font-bold mb-4">Search Movies</h2>
+                <div class="relative">
+                    <input type="text" id="search-input" class="w-full bg-slate-800 text-white rounded-lg p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Search for a movie...">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                </div>
+                <div id="search-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6">
+                    <!-- Search results will be injected here -->
+                </div>
+            </div>
+
+            <!-- Categories Page -->
+            <div id="categories-page" class="page p-4">
+                <h2 class="text-2xl font-bold mb-4">All Categories</h2>
+                <div id="categories-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Categories will be injected here -->
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profile-page" class="page p-4">
+                <h2 class="text-2xl font-bold mb-6">Profile</h2>
+                
+                <!-- Logged In View -->
+                <div id="logged-in-view" class="hidden text-center">
+                    <i class="fas fa-user-circle text-6xl text-blue-500 mb-4"></i>
+                    <p class="text-lg mb-2">Welcome back!</p>
+                    <p id="user-email" class="text-gray-400 mb-6"></p>
+                    <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 rounded-lg p-3 font-semibold">Logout</button>
+                </div>
+
+                <!-- Auth Forms View -->
+                <div id="auth-forms-view">
+                    <!-- MODIFIED: Wrapped Login form in a container -->
+                    <div id="login-container">
+                        <form id="login-form" class="bg-slate-800 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">Login</h3>
+                            <input type="email" id="login-email" class="w-full bg-slate-700 rounded p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Email" required>
+                            <input type="password" id="login-password" class="w-full bg-slate-700 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Password" required>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 rounded-lg p-3 font-semibold">Login</button>
+                        </form>
+                        <!-- ADDED: Toggle button to switch to signup -->
+                        <p class="text-center text-sm text-gray-400 mt-4">
+                            Don't have an account? <button id="show-signup-btn" class="font-semibold text-blue-500 hover:underline focus:outline-none">Sign Up</button>
+                        </p>
+                    </div>
+
+                    <!-- MODIFIED: Wrapped Signup form in a container and made it hidden by default -->
+                    <div id="signup-container" class="hidden">
+                        <form id="signup-form" class="bg-slate-800 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">Sign Up</h3>
+                            <input type="email" id="signup-email" class="w-full bg-slate-700 rounded p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Email" required>
+                            <input type="password" id="signup-password" class="w-full bg-slate-700 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Password (min. 6 characters)" required>
+                            <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 rounded-lg p-3 font-semibold">Create Account</button>
+                        </form>
+                        <!-- ADDED: Toggle button to switch back to login -->
+                        <p class="text-center text-sm text-gray-400 mt-4">
+                            Already have an account? <button id="show-login-btn" class="font-semibold text-blue-500 hover:underline focus:outline-none">Login</button>
+                        </p>
+                    </div>
+                </div>
+                 <p id="auth-error" class="text-red-500 mt-4 text-center"></p>
+            </div>
+
+            <!-- Movie Details Page -->
+            <div id="movie-details-page" class="page">
+                <div id="movie-details-content" class="relative">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-4xl mx-auto h-20 bg-slate-800/80 backdrop-blur-sm border-t border-slate-700 shadow-t-lg">
+            <div class="flex justify-around items-center h-full">
+                <button data-page="home-page" class="nav-btn text-blue-500 flex flex-col items-center">
+                    <i class="fas fa-home text-2xl"></i>
+                    <span class="text-xs mt-1">Home</span>
+                </button>
+                <button data-page="search-page" class="nav-btn text-gray-400 flex flex-col items-center">
+                    <i class="fas fa-search text-2xl"></i>
+                    <span class="text-xs mt-1">Search</span>
+                </button>
+                <button data-page="categories-page" class="nav-btn text-gray-400 flex flex-col items-center">
+                    <i class="fas fa-th-large text-2xl"></i>
+                    <span class="text-xs mt-1">Categories</span>
+                </button>
+                <button data-page="profile-page" class="nav-btn text-gray-400 flex flex-col items-center">
+                    <i class="fas fa-user text-2xl"></i>
+                    <span class="text-xs mt-1">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- UPDATE MODAL POPUP -->
+    <div id="update-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl transform scale-95 transition-all duration-300">
+            <div class="w-16 h-16 bg-blue-500/15 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-arrow-up-from-bracket text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-1">New Update Available!</h3>
+            <p id="update-modal-version" class="text-xs text-blue-400 font-semibold mb-3"></p>
+            <p id="update-modal-message" class="text-sm text-gray-300 mb-6 leading-relaxed"></p>
+            <div class="flex flex-col space-y-2">
+                <a id="update-modal-link" href="#" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-3 font-semibold transition-colors flex items-center justify-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>Update Now</span>
+                </a>
+                <button id="update-modal-skip" class="w-full bg-slate-700 hover:bg-slate-600 text-gray-300 rounded-xl p-3 font-semibold transition-colors">
+                    Later
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmZ-SmBj1uCNvvT6HuQAcrUtJ4loyv6i0",
+            authDomain: "caption-box-5573e.firebaseapp.com",
+            databaseURL: "https://caption-box-5573e-default-rtdb.firebaseio.com",
+            projectId: "caption-box-5573e",
+            storageBucket: "caption-box-5573e.firebasestorage.app",
+            messagingSenderId: "169925927612",
+            appId: "1:169925927612:web:f2c02a7d63f6fce438e6b9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        // --- GLOBAL STATE ---
+        const APP_VERSION_CODE = 1; // Current App Version Code
+        let allMovies = {};
+        let allCategories = {};
+        let currentBannerIndex = 0;
+        let bannerInterval;
+
+        // --- UI ELEMENTS ---
+        const pages = document.querySelectorAll('.page');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        // --- SPA NAVIGATION ---
+        const showPage = (pageId) => {
+            pages.forEach(page => {
+                page.classList.toggle('active', page.id === pageId);
+            });
+            navBtns.forEach(btn => {
+                btn.classList.toggle('text-blue-500', btn.dataset.page === pageId);
+                btn.classList.toggle('text-gray-400', btn.dataset.page !== pageId);
+            });
+            window.scrollTo(0, 0);
+        };
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => showPage(btn.dataset.page));
+        });
+        
+        // --- AUTH UI ELEMENTS ---
+        const loggedInView = document.getElementById('logged-in-view');
+        const authFormsView = document.getElementById('auth-forms-view');
+        const userEmailEl = document.getElementById('user-email');
+        const authErrorEl = document.getElementById('auth-error');
+        // ADDED: References to new containers and buttons
+        const loginContainer = document.getElementById('login-container');
+        const signupContainer = document.getElementById('signup-container');
+        const showSignupBtn = document.getElementById('show-signup-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+
+
+        // --- AUTHENTICATION LOGIC ---
+        auth.onAuthStateChanged(user => {
+            authErrorEl.textContent = '';
+            if (user) {
+                loggedInView.classList.remove('hidden');
+                authFormsView.classList.add('hidden');
+                userEmailEl.textContent = user.email;
+            } else {
+                loggedInView.classList.add('hidden');
+                authFormsView.classList.remove('hidden');
+                userEmailEl.textContent = '';
+                // MODIFIED: Ensure the view resets to the login form when logged out
+                signupContainer.classList.add('hidden');
+                loginContainer.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .catch(error => authErrorEl.textContent = error.message);
+        });
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => authErrorEl.textContent = error.message);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // --- ADDED: AUTH FORM TOGGLING LOGIC ---
+        showSignupBtn.addEventListener('click', () => {
+            loginContainer.classList.add('hidden');
+            signupContainer.classList.remove('hidden');
+            authErrorEl.textContent = ''; // Clear previous errors
+        });
+
+        showLoginBtn.addEventListener('click', () => {
+            signupContainer.classList.add('hidden');
+            loginContainer.classList.remove('hidden');
+            authErrorEl.textContent = ''; // Clear previous errors
+        });
+
+
+        // --- DATA FETCHING AND RENDERING ---
+
+        // Banners
+        const renderBanners = (banners) => {
+            const container = document.getElementById('banner-carousel');
+            if (!banners || Object.keys(banners).length === 0) return;
+            container.innerHTML = '';
+            const bannerIds = Object.keys(banners);
+
+            bannerIds.forEach((key, index) => {
+                // Defensive check for URL
+                if (banners[key] && banners[key].imageUrl) {
+                    const bannerEl = document.createElement('img');
+                    bannerEl.src = banners[key].imageUrl;
+                    bannerEl.className = `absolute w-full h-full object-cover transition-opacity duration-1000 ${index === 0 ? 'opacity-100' : 'opacity-0'}`;
+                    container.appendChild(bannerEl);
+                }
+            });
+
+            const bannerImages = container.querySelectorAll('img');
+            if (bannerImages.length > 1) {
+                if(bannerInterval) clearInterval(bannerInterval); // Clear previous interval
+                bannerInterval = setInterval(() => {
+                    bannerImages[currentBannerIndex].classList.remove('opacity-100');
+                    currentBannerIndex = (currentBannerIndex + 1) % bannerImages.length;
+                    bannerImages[currentBannerIndex].classList.add('opacity-100');
+                }, 5000);
+            }
+        };
+
+        // Home Page Carousels
+        const renderHomePage = () => {
+            const container = document.getElementById('movie-carousels-container');
+            container.innerHTML = '<div>Loading...</div>';
+            
+            const categoryIds = Object.keys(allCategories);
+            container.innerHTML = '';
+            
+            categoryIds.forEach(catId => {
+                const category = allCategories[catId];
+                // Defensive check for category name
+                if (!category || !category.name) return;
+
+                const moviesInCategory = Object.entries(allMovies).filter(([id, movie]) => movie.category === category.name);
+
+                if (moviesInCategory.length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'mb-8';
+                    let moviesHTML = '';
+                    moviesInCategory.forEach(([movieId, movie]) => {
+                        // Defensive check for movie poster URL
+                        if (movie && movie.posterUrl) {
+                            moviesHTML += `
+                                <div class="flex-shrink-0 w-32 md:w-40 mr-4 cursor-pointer" onclick="showMovieDetails('${movieId}')">
+                                    <img src="${movie.posterUrl}" alt="${movie.title}" class="w-full h-48 md:h-60 object-cover rounded-lg shadow-md hover:scale-105 transition-transform duration-300">
+                                </div>`;
+                        }
+                    });
+
+                    section.innerHTML = `
+                        <h2 class="text-xl font-bold mb-4">${category.name}</h2>
+                        <div class="flex overflow-x-auto pb-4 no-scrollbar">
+                            ${moviesHTML}
+                        </div>`;
+                    container.appendChild(section);
+                }
+            });
+        };
+
+        // Movie Details Page
+        const showMovieDetails = (movieId) => {
+            // CRITICAL: Defensive check to prevent errors like /movies/undefined
+            if (!movieId) {
+                console.error("Attempted to show details for a null or undefined movieId.");
+                return;
+            }
+
+            const movie = allMovies[movieId];
+            if (!movie) {
+                console.error(`Movie with ID ${movieId} not found.`);
+                return;
+            }
+
+            const contentEl = document.getElementById('movie-details-content');
+            // Defensive checks for all movie properties
+            const posterUrl = movie.posterUrl || 'https://via.placeholder.com/400x600?text=No+Image';
+            const title = movie.title || 'Untitled';
+            const year = movie.year || 'N/A';
+            const rating = movie.rating || 'N/A';
+            const description = movie.description || 'No description available.';
+            const cast = movie.cast || 'N/A';
+            
+            contentEl.innerHTML = `
+                <div class="h-80 md:h-96 w-full relative">
+                    <img src="${posterUrl}" class="w-full h-full object-cover object-top absolute">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    <button onclick="history.back()" class="absolute top-4 left-4 bg-black/50 w-10 h-10 rounded-full flex items-center justify-center">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="p-4 -mt-20 relative z-10">
+                    <h2 class="text-3xl font-bold">${title}</h2>
+                    <div class="flex items-center space-x-4 text-gray-400 my-2">
+                        <span>${year}</span>
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span>${rating}</span>
+                        </div>
+                    </div>
+                    <a href="${movie.watchLink || '#'}" target="_blank" class="block w-full text-center bg-blue-600 hover:bg-blue-700 rounded-lg p-3 font-semibold my-4">
+                        <i class="fas fa-play mr-2"></i> Watch Now
+                    </a>
+            
