@@ -387,4 +387,144 @@
                     <a href="${movie.watchLink || '#'}" target="_blank" class="block w-full text-center bg-blue-600 hover:bg-blue-700 rounded-lg p-3 font-semibold my-4">
                         <i class="fas fa-play mr-2"></i> Watch Now
                     </a>
-            
+                    <p class="text-gray-300 leading-relaxed">${description}</p>
+                    <h3 class="text-lg font-semibold mt-4 mb-2">Cast</h3>
+                    <p class="text-gray-400">${cast}</p>
+                </div>
+            `;
+            showPage('movie-details-page');
+        };
+
+        // Search Page
+        const searchInput = document.getElementById('search-input');
+        const searchResultsContainer = document.getElementById('search-results');
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            if (searchTerm.length < 2) {
+                searchResultsContainer.innerHTML = '<p class="col-span-full text-center text-gray-400">Enter at least 2 characters to search.</p>';
+                return;
+            }
+
+            const results = Object.entries(allMovies).filter(([id, movie]) => 
+                movie.title && movie.title.toLowerCase().includes(searchTerm)
+            );
+
+            if (results.length > 0) {
+                searchResultsContainer.innerHTML = results.map(([movieId, movie]) => {
+                    // Defensive check for poster URL
+                    if (movie && movie.posterUrl) {
+                        return `
+                        <div class="cursor-pointer" onclick="showMovieDetails('${movieId}')">
+                            <img src="${movie.posterUrl}" alt="${movie.title}" class="w-full h-auto object-cover rounded-lg shadow-md">
+                        </div>`;
+                    }
+                    return ''; // Return empty string if poster is missing
+                }).join('');
+            } else {
+                searchResultsContainer.innerHTML = '<p class="col-span-full text-center text-gray-400">No movies found.</p>';
+            }
+        });
+        
+        // Categories Page
+        const renderCategoriesPage = () => {
+            const container = document.getElementById('categories-grid');
+            const icons = ['fa-film', 'fa-laugh-beam', 'fa-skull-crossbones', 'fa-heart', 'fa-space-shuttle', 'fa-mask', 'fa-question-circle'];
+            let iconIndex = 0;
+
+            container.innerHTML = Object.values(allCategories).map(cat => {
+                if (!cat || !cat.name) return '';
+                const iconClass = icons[iconIndex % icons.length];
+                iconIndex++;
+                return `
+                    <div class="category-grid-item flex flex-col items-center justify-center p-6 rounded-lg shadow-lg text-center cursor-pointer">
+                        <i class="fas ${iconClass} text-4xl mb-3"></i>
+                        <span class="font-semibold text-lg">${cat.name}</span>
+                    </div>`;
+            }).join('');
+        };
+
+        // App Update Checker
+        const checkAppUpdate = () => {
+            db.ref('settings/appVersion').on('value', snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    const dbVersionCode = parseInt(data.versionCode || 0);
+                    const forceUpdate = !!data.forceUpdate;
+                    const updateUrl = data.updateUrl || '#';
+                    const updateMessage = data.updateMessage || 'A new update is available. Please download to keep streaming.';
+                    const versionName = data.versionName || '1.0.0';
+
+                    if (dbVersionCode > APP_VERSION_CODE) {
+                        const modal = document.getElementById('update-modal');
+                        const versionText = document.getElementById('update-modal-version');
+                        const messageText = document.getElementById('update-modal-message');
+                        const linkBtn = document.getElementById('update-modal-link');
+                        const skipBtn = document.getElementById('update-modal-skip');
+
+                        versionText.textContent = `v${versionName}`;
+                        messageText.textContent = updateMessage;
+                        linkBtn.href = updateUrl;
+
+                        if (forceUpdate) {
+                            skipBtn.classList.add('hidden');
+                        } else {
+                            skipBtn.classList.remove('hidden');
+                        }
+
+                        modal.classList.remove('hidden');
+                        setTimeout(() => {
+                            modal.querySelector('div').classList.remove('scale-95');
+                            modal.querySelector('div').classList.add('scale-100');
+                        }, 50);
+
+                        skipBtn.onclick = () => {
+                            modal.classList.add('hidden');
+                            modal.querySelector('div').classList.add('scale-95');
+                            modal.querySelector('div').classList.remove('scale-100');
+                        };
+                    }
+                }
+            });
+        };
+
+
+        // --- INITIAL DATA LOAD ---
+        const loadInitialData = () => {
+            const moviesRef = db.ref('movies');
+            const categoriesRef = db.ref('categories');
+            const bannersRef = db.ref('banners');
+
+            bannersRef.on('value', snapshot => {
+                renderBanners(snapshot.val());
+            });
+
+            categoriesRef.on('value', snapshot => {
+                allCategories = snapshot.val() || {};
+                renderCategoriesPage();
+                // If movies are already loaded, re-render home page
+                if (Object.keys(allMovies).length > 0) {
+                    renderHomePage();
+                }
+            });
+
+            moviesRef.on('value', snapshot => {
+                allMovies = snapshot.val() || {};
+                // If categories are already loaded, render home page
+                if (Object.keys(allCategories).length > 0) {
+                    renderHomePage();
+                }
+            });
+
+            // Call Version Control
+            checkAppUpdate();
+        };
+
+        // --- APP INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home-page');
+            loadInitialData();
+        });
+    </script>
+</body>
+</html>
